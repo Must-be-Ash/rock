@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,14 +52,15 @@
             display: flex;
             justify-content: center;
             width: 100%;
-            font-size: 30px;
             background-color: #ccc;
             padding: 10px;
+            height: 60px; /* Set footer height */
         }
         .footer .choice {
             margin: 0 10px;
             padding: 5px;
             border-radius: 10px;
+            font-size: 40px; /* Match the footer height */
         }
         .selected {
             background-color: #8fbc8f;
@@ -67,16 +69,11 @@
     </style>
 </head>
 <body>
-    <div id="result"></div>
-    <div id="selection-screen">
-        <div class="choice" onclick="startGame('🪨')">🪨</div>
-        <div class="choice" onclick="startGame('🧻')">🧻</div>
-        <div class="choice" onclick="startGame('✂️')">✂️</div>
-    </div>
+    <div id="result">Select your winner:</div>
     <div class="footer">
-        <div id="footer-rock" class="choice">🪨</div>
-        <div id="footer-paper" class="choice">🧻</div>
-        <div id="footer-scissors" class="choice">✂️</div>
+        <div id="footer-rock" class="choice" onclick="selectChoice('🪨')">🪨</div>
+        <div id="footer-paper" class="choice" onclick="selectChoice('🧻')">🧻</div>
+        <div id="footer-scissors" class="choice" onclick="selectChoice('✂️')">✂️</div>
     </div>
 
     <script>
@@ -84,7 +81,7 @@
         let selectedWinner;
         const emojis = ['🪨', '🧻', '✂️'];
         const emojiElements = [];
-        const footerHeight = 50; // Adjust footer height
+        const footerHeight = 60; // Set footer height
 
         function createEmoji(type) {
             const emoji = document.createElement('div');
@@ -99,10 +96,14 @@
             emojiElements.push(emoji);
         }
 
-        function startGame(choice) {
+        function selectChoice(choice) {
             selectedWinner = choice;
-            document.getElementById('selection-screen').style.display = 'none';
             highlightSelectedEmoji(choice);
+            startGame();
+        }
+
+        function startGame() {
+            document.getElementById('result').innerText = '';
             for (let i = 0; i < 30; i++) {
                 createEmoji('🪨');
                 createEmoji('🧻');
@@ -218,4 +219,3 @@
     </script>
 </body>
 </html>
-
