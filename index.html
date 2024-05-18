@@ -3,102 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock Paper Scissors</title>
+    <title>Rock Paper Scissors Simulation</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
             margin: 0;
             overflow: hidden;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        .choices {
+            background-color: #f0f0f0;
             display: flex;
             justify-content: center;
-            margin-bottom: 20px;
+            align-items: center;
+            height: 100vh;
             position: relative;
         }
-        .choice {
-            font-size: 50px;
-            margin: 0 15px;
-            cursor: pointer;
-            position: relative;
-            z-index: 10;
-        }
-        .result {
-            margin-top: 20px;
-            font-size: 24px;
-        }
-        .floating-emoji {
+        .emoji {
             position: absolute;
             font-size: 30px;
-            animation: float 10s infinite;
-            z-index: 1;
+            pointer-events: none;
         }
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-100px); }
-            100% { transform: translateY(0); }
+        #result {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <h1>Rock Paper Scissors</h1>
-    <div class="choices">
-        <div class="choice" onclick="play('rock')">🪨</div>
-        <div class="choice" onclick="play('paper')">🧻</div>
-        <div class="choice" onclick="play('scissors')">✂️</div>
-    </div>
-    <div class="result" id="result">Pick your choice to start the game.</div>
-
+    <div id="result">Simulation Running...</div>
     <script>
-        function play(playerChoice) {
-            const choices = ['rock', 'paper', 'scissors'];
-            const computerChoice = choices[Math.floor(Math.random() * 3)];
-            let result = '';
+        const emojis = ['🪨', '🧻', '✂️'];
+        const emojiElements = [];
+        const emojiCounts = { '🪨': 30, '🧻': 30, '✂️': 30 };
 
-            if (playerChoice === computerChoice) {
-                result = 'It\'s a tie!';
-            } else if (
-                (playerChoice === 'rock' && computerChoice === 'scissors') ||
-                (playerChoice === 'paper' && computerChoice === 'rock') ||
-                (playerChoice === 'scissors' && computerChoice === 'paper')
-            ) {
-                result = 'You win!';
-            } else {
-                result = 'You lose!';
+        function createEmoji(type) {
+            const emoji = document.createElement('div');
+            emoji.className = 'emoji';
+            emoji.innerText = type;
+            emoji.style.left = Math.random() * window.innerWidth + 'px';
+            emoji.style.top = Math.random() * window.innerHeight + 'px';
+            emoji.dx = (Math.random() - 0.5) * 2;
+            emoji.dy = (Math.random() - 0.5) * 2;
+            emoji.type = type;
+            document.body.appendChild(emoji);
+            emojiElements.push(emoji);
+        }
+
+        for (let i = 0; i < 30; i++) {
+            createEmoji('🪨');
+            createEmoji('🧻');
+            createEmoji('✂️');
+        }
+
+        function moveEmojis() {
+            emojiElements.forEach(emoji => {
+                let x = parseFloat(emoji.style.left);
+                let y = parseFloat(emoji.style.top);
+                x += emoji.dx;
+                y += emoji.dy;
+
+                if (x <= 0 || x >= window.innerWidth - 30) emoji.dx *= -1;
+                if (y <= 0 || y >= window.innerHeight - 30) emoji.dy *= -1;
+
+                emoji.style.left = x + 'px';
+                emoji.style.top = y + 'px';
+            });
+        }
+
+        function detectCollisions() {
+            for (let i = 0; i < emojiElements.length; i++) {
+                for (let j = i + 1; j < emojiElements.length; j++) {
+                    const emoji1 = emojiElements[i];
+                    const emoji2 = emojiElements[j];
+
+                    const rect1 = emoji1.getBoundingClientRect();
+                    const rect2 = emoji2.getBoundingClientRect();
+
+                    if (
+                        rect1.left < rect2.right &&
+                        rect1.right > rect2.left &&
+                        rect1.top < rect2.bottom &&
+                        rect1.bottom > rect2.top
+                    ) {
+                        handleCollision(emoji1, emoji2);
+                    }
+                }
             }
-
-            document.getElementById('result').innerText = `You chose ${getEmoji(playerChoice)}, computer chose ${getEmoji(computerChoice)}. ${result}`;
         }
 
-        function getEmoji(choice) {
-            if (choice === 'rock') return '🪨';
-            if (choice === 'paper') return '🧻';
-            if (choice === 'scissors') return '✂️';
-        }
-
-        function createFloatingEmojis() {
-            const emojis = ['🪨', '🧻', '✂️'];
-            for (let i = 0; i < 20; i++) {
-                const emoji = document.createElement('div');
-                emoji.className = 'floating-emoji';
-                emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                emoji.style.left = Math.random() * 100 + 'vw';
-                emoji.style.top = Math.random() * 100 + 'vh';
-                emoji.style.animationDuration = (Math.random() * 5 + 5) + 's';
-                document.body.appendChild(emoji);
+        function handleCollision(emoji1, emoji2) {
+            if (emoji1.type === '🪨' && emoji2.type === '🧻') {
+                emoji1.innerText = '🧻';
+                emoji1.type = '🧻';
+            } else if (emoji1.type === '🧻' && emoji2.type === '🪨') {
+                emoji2.innerText = '🧻';
+                emoji2.type = '🧻';
+            } else if (emoji1.type === '🪨' && emoji2.type === '✂️') {
+                emoji2.innerText = '🪨';
+                emoji2.type = '🪨';
+            } else if (emoji1.type === '✂️' && emoji2.type === '🪨') {
+                emoji1.innerText = '🪨';
+                emoji1.type = '🪨';
+            } else if (emoji1.type === '🧻' && emoji2.type === '✂️') {
+                emoji1.innerText = '✂️';
+                emoji1.type = '✂️';
+            } else if (emoji1.type === '✂️' && emoji2.type === '🧻') {
+                emoji2.innerText = '✂️';
+                emoji2.type = '✂️';
             }
         }
 
-        createFloatingEmojis();
+        function updateGameState() {
+            moveEmojis();
+            detectCollisions();
+
+            const counts = { '🪨': 0, '🧻': 0, '✂️': 0 };
+            emojiElements.forEach(emoji => counts[emoji.type]++);
+
+            if (counts['🪨'] === 0 && counts['🧻'] === 0) {
+                document.getElementById('result').innerText = 'Scissors Wins!';
+                clearInterval(gameInterval);
+            } else if (counts['🪨'] === 0 && counts['✂️'] === 0) {
+                document.getElementById('result').innerText = 'Paper Wins!';
+                clearInterval(gameInterval);
+            } else if (counts['🧻'] === 0 && counts['✂️'] === 0) {
+                document.getElementById('result').innerText = 'Rock Wins!';
+                clearInterval(gameInterval);
+            }
+        }
+
+        const gameInterval = setInterval(updateGameState, 20);
     </script>
 </body>
 </html>
