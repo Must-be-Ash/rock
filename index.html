@@ -14,6 +14,7 @@
             font-family: Arial, sans-serif;
             background-color: #f0f0f0;
             margin: 0;
+            overflow: hidden;
         }
         h1 {
             margin-bottom: 20px;
@@ -22,15 +23,29 @@
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
+            position: relative;
         }
         .choice {
             font-size: 50px;
             margin: 0 15px;
             cursor: pointer;
+            position: relative;
+            z-index: 10;
         }
         .result {
             margin-top: 20px;
             font-size: 24px;
+        }
+        .floating-emoji {
+            position: absolute;
+            font-size: 30px;
+            animation: float 10s infinite;
+            z-index: 1;
+        }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-100px); }
+            100% { transform: translateY(0); }
         }
     </style>
 </head>
@@ -69,6 +84,22 @@
             if (choice === 'paper') return '🧻';
             if (choice === 'scissors') return '✂️';
         }
+
+        function createFloatingEmojis() {
+            const emojis = ['🪨', '🧻', '✂️'];
+            for (let i = 0; i < 20; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'floating-emoji';
+                emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = Math.random() * 100 + 'vw';
+                emoji.style.top = Math.random() * 100 + 'vh';
+                emoji.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                document.body.appendChild(emoji);
+            }
+        }
+
+        createFloatingEmojis();
     </script>
 </body>
 </html>
+
