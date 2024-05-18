@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +16,7 @@
             align-items: center;
             height: 100vh;
             position: relative;
+            font-family: Arial, sans-serif;
         }
         .emoji {
             position: absolute;
@@ -27,32 +30,62 @@
             font-size: 24px;
             z-index: 10;
         }
+        #selection-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .choice {
+            font-size: 50px;
+            margin: 0 15px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <div id="result">Simulation Running...</div>
+    <div id="result">Select your winner to start the game:</div>
+    <div id="selection-screen">
+        <div class="choice" onclick="startGame('🪨')">🪨</div>
+        <div class="choice" onclick="startGame('🧻')">🧻</div>
+        <div class="choice" onclick="startGame('✂️')">✂️</div>
+    </div>
+
     <script>
+        let gameInterval;
+        let selectedWinner;
         const emojis = ['🪨', '🧻', '✂️'];
         const emojiElements = [];
-        const emojiCounts = { '🪨': 30, '🧻': 30, '✂️': 30 };
 
         function createEmoji(type) {
             const emoji = document.createElement('div');
             emoji.className = 'emoji';
             emoji.innerText = type;
-            emoji.style.left = Math.random() * window.innerWidth + 'px';
-            emoji.style.top = Math.random() * window.innerHeight + 'px';
-            emoji.dx = (Math.random() - 0.5) * 2;
-            emoji.dy = (Math.random() - 0.5) * 2;
+            emoji.style.left = Math.random() * (window.innerWidth - 30) + 'px';
+            emoji.style.top = Math.random() * (window.innerHeight - 30) + 'px';
+            emoji.dx = (Math.random() - 0.5) * 4; // Increase speed
+            emoji.dy = (Math.random() - 0.5) * 4; // Increase speed
             emoji.type = type;
             document.body.appendChild(emoji);
             emojiElements.push(emoji);
         }
 
-        for (let i = 0; i < 30; i++) {
-            createEmoji('🪨');
-            createEmoji('🧻');
-            createEmoji('✂️');
+        function startGame(choice) {
+            selectedWinner = choice;
+            document.getElementById('selection-screen').style.display = 'none';
+            document.getElementById('result').innerText = 'Simulation Running...';
+            for (let i = 0; i < 30; i++) {
+                createEmoji('🪨');
+                createEmoji('🧻');
+                createEmoji('✂️');
+            }
+            gameInterval = setInterval(updateGameState, 20);
         }
 
         function moveEmojis() {
@@ -121,19 +154,19 @@
             emojiElements.forEach(emoji => counts[emoji.type]++);
 
             if (counts['🪨'] === 0 && counts['🧻'] === 0) {
-                document.getElementById('result').innerText = 'Scissors Wins!';
-                clearInterval(gameInterval);
+                endGame('✂️');
             } else if (counts['🪨'] === 0 && counts['✂️'] === 0) {
-                document.getElementById('result').innerText = 'Paper Wins!';
-                clearInterval(gameInterval);
+                endGame('🧻');
             } else if (counts['🧻'] === 0 && counts['✂️'] === 0) {
-                document.getElementById('result').innerText = 'Rock Wins!';
-                clearInterval(gameInterval);
+                endGame('🪨');
             }
         }
 
-        const gameInterval = setInterval(updateGameState, 20);
+        function endGame(winner) {
+            clearInterval(gameInterval);
+            const resultText = winner === selectedWinner ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
+            document.getElementById('result').innerText = resultText;
+        }
     </script>
 </body>
 </html>
-
