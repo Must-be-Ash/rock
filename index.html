@@ -56,7 +56,7 @@
     </style>
 </head>
 <body>
-    <div id="result">Select your winner:</div>
+    <div id="result">Select your winner and start spamming emojis:</div>
     <div class="footer">
         <div id="footer-rock" class="choice" onclick="selectChoice('🪨')">🪨</div>
         <div id="footer-paper" class="choice" onclick="selectChoice('🧻')">🧻</div>
@@ -91,12 +91,9 @@
 
         function startGame() {
             document.getElementById('result').innerText = '';
-            for (let i = 0; i < 30; i++) {
-                createEmoji('🪨');
-                createEmoji('🧻');
-                createEmoji('✂️');
+            if (!gameInterval) {
+                gameInterval = setInterval(updateGameState, 20);
             }
-            gameInterval = setInterval(updateGameState, 20);
         }
 
         function highlightSelectedEmoji(choice) {
@@ -111,6 +108,10 @@
                 document.getElementById('footer-scissors').classList.add('selected');
             }
         }
+
+        document.getElementById('footer-rock').addEventListener('click', () => createEmoji('🪨'));
+        document.getElementById('footer-paper').addEventListener('click', () => createEmoji('🧻'));
+        document.getElementById('footer-scissors').addEventListener('click', () => createEmoji('✂️'));
 
         function moveEmojis() {
             emojiElements.forEach(emoji => {
@@ -188,6 +189,7 @@
 
         function endGame(winner) {
             clearInterval(gameInterval);
+            gameInterval = null;
             const resultText = winner === selectedWinner ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
             document.getElementById('result').innerText = resultText;
         }
