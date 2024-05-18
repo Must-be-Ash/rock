@@ -47,18 +47,22 @@
         }
         .footer {
             position: absolute;
-            bottom: 20px;
+            bottom: 0;
             display: flex;
             justify-content: center;
             width: 100%;
             font-size: 30px;
+            background-color: #ccc;
+            padding: 10px;
         }
         .footer .choice {
             margin: 0 10px;
+            padding: 5px;
+            border-radius: 10px;
         }
         .selected {
-            font-weight: bold;
-            font-size: 50px;
+            background-color: #8fbc8f;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -80,13 +84,14 @@
         let selectedWinner;
         const emojis = ['🪨', '🧻', '✂️'];
         const emojiElements = [];
+        const footerHeight = 50; // Adjust footer height
 
         function createEmoji(type) {
             const emoji = document.createElement('div');
             emoji.className = 'emoji';
             emoji.innerText = type;
             emoji.style.left = Math.random() * (window.innerWidth - 30) + 'px';
-            emoji.style.top = Math.random() * (window.innerHeight - 30) + 'px';
+            emoji.style.top = Math.random() * (window.innerHeight - footerHeight - 30) + 'px'; // Adjust for footer
             emoji.dx = (Math.random() - 0.5) * 4; // Increase speed
             emoji.dy = (Math.random() - 0.5) * 4; // Increase speed
             emoji.type = type;
@@ -127,7 +132,7 @@
                 y += emoji.dy;
 
                 if (x <= 0 || x >= window.innerWidth - 30) emoji.dx *= -1;
-                if (y <= 0 || y >= window.innerHeight - 30) emoji.dy *= -1;
+                if (y <= 0 || y >= window.innerHeight - footerHeight - 30) emoji.dy *= -1; // Adjust for footer
 
                 emoji.style.left = x + 'px';
                 emoji.style.top = y + 'px';
@@ -213,3 +218,4 @@
     </script>
 </body>
 </html>
+
