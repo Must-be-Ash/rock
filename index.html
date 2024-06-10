@@ -66,11 +66,12 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-
         let selectedEmoji = null;
+        let gameStarted = false;
+        let gameInterval;
 
         function selectEmoji(emoji) {
-            if (!selectedEmoji) {
+            if (!selectedEmoji && !gameStarted) {
                 selectedEmoji = emoji;
                 highlightSelectedEmoji(emoji);
                 socket.emit('selectEmoji', emoji);
@@ -92,7 +93,7 @@
 
         socket.on('currentEmojis', (emojis) => {
             emojis.forEach(emoji => {
-                createEmoji(emoji);
+                createEmoji(emoji.emoji);
             });
         });
 
@@ -100,9 +101,33 @@
             createEmoji(emoji);
         });
 
-        socket.on('startGame', (emojis) => {
+        socket.on('startGame', () => {
+            document.getElementById('result').innerText = 'Game will start in 30 seconds!';
+        });
+
+        socket.on('runGame', () => {
             document.getElementById('result').innerText = 'Game Started!';
+            gameStarted = true;
             gameInterval = setInterval(updateGameState, 20);
+        });
+
+        socket.on('endGame', (winner) => {
+            clearInterval(gameInterval);
+            gameStarted = false;
+            document.getElementById('result').innerText = `Game Over! ${winner} Wins!`;
+        });
+
+        socket.on('resetGame', () => {
+            selectedEmoji = null;
+            document.getElementById('result').innerText = 'Select your emoji to start the game:';
+            document.getElementById('footer-rock').classList.remove('selected');
+            document.getElementById('footer-paper').classList.remove('selected');
+            document.getElementById('footer-scissors').classList.remove('selected');
+            document.querySelectorAll('.emoji').forEach(emoji => emoji.remove());
+        });
+
+        socket.on('gameInProgress', () => {
+            document.getElementById('result').innerText = 'Game in Progress. Please wait for the next round.';
         });
 
         const emojis = [];
@@ -197,7 +222,7 @@
 
         function endGame(winner) {
             clearInterval(gameInterval);
-            gameInterval = null;
+            gameStarted = false;
             const resultText = winner === selectedEmoji ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
             document.getElementById('result').innerText = resultText;
         }
