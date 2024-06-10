@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Rock Paper Scissors</title>
+    <title>Rock Paper Scissors Multiplayer</title>
     <style>
         body {
             margin: 0;
@@ -41,13 +41,13 @@
             width: 100%;
             background-color: #ccc;
             padding: 10px;
-            height: 60px; /* Set footer height */
+            height: 60px;
         }
         .footer .choice {
             margin: 0 10px;
             padding: 5px;
             border-radius: 10px;
-            font-size: 40px; /* Match the footer height */
+            font-size: 40px;
         }
         .selected {
             background-color: #8fbc8f;
@@ -56,25 +56,41 @@
     </style>
 </head>
 <body>
-    <div id="result">Select your emoji to start the game:</div>
+    <div id="result">Select your winner and start spamming emojis:</div>
     <div class="footer">
         <div id="footer-rock" class="choice" onclick="selectEmoji('🪨')">🪨</div>
         <div id="footer-paper" class="choice" onclick="selectEmoji('🧻')">🧻</div>
         <div id="footer-scissors" class="choice" onclick="selectEmoji('✂️')">✂️</div>
     </div>
-
-    <script src="/socket.io/socket.io.js"></script>
+    <div id="countdown"></div>
     <script>
-        const socket = io();
-        let selectedEmoji = null;
-        let gameStarted = false;
-        let gameInterval;
+        let selectedWinner = null;
+        let gameInProgress = false;
+        let countdownInterval;
+
+        async function fetchTimer() {
+            const response = await fetch('/timer');
+            const data = await response.json();
+            return data;
+        }
+
+        function updateTimer() {
+            fetchTimer().then(({ countdown, gameInProgress: gameStatus }) => {
+                gameInProgress = gameStatus;
+                document.getElementById('countdown').innerText = `Time left to select: ${countdown}s`;
+
+                if (gameInProgress) {
+                    document.getElementById('result').innerText = 'Game started!';
+                } else {
+                    document.getElementById('result').innerText = 'Select your winner and start spamming emojis:';
+                }
+            });
+        }
 
         function selectEmoji(emoji) {
-            if (!selectedEmoji && !gameStarted) {
-                selectedEmoji = emoji;
+            if (!gameInProgress && !selectedWinner) {
+                selectedWinner = emoji;
                 highlightSelectedEmoji(emoji);
-                socket.emit('selectEmoji', emoji);
             }
         }
 
@@ -91,70 +107,34 @@
             }
         }
 
-        socket.on('currentEmojis', (emojis) => {
-            emojis.forEach(emoji => {
-                createEmoji(emoji.emoji);
-            });
-        });
-
-        socket.on('emojiAdded', (emoji) => {
-            createEmoji(emoji);
-        });
-
-        socket.on('startGame', () => {
-            document.getElementById('result').innerText = 'Game will start in 30 seconds!';
-        });
-
-        socket.on('runGame', () => {
-            document.getElementById('result').innerText = 'Game Started!';
-            gameStarted = true;
-            gameInterval = setInterval(updateGameState, 20);
-        });
-
-        socket.on('endGame', (winner) => {
-            clearInterval(gameInterval);
-            gameStarted = false;
-            document.getElementById('result').innerText = `Game Over! ${winner} Wins!`;
-        });
-
-        socket.on('resetGame', () => {
-            selectedEmoji = null;
-            document.getElementById('result').innerText = 'Select your emoji to start the game:';
-            document.getElementById('footer-rock').classList.remove('selected');
-            document.getElementById('footer-paper').classList.remove('selected');
-            document.getElementById('footer-scissors').classList.remove('selected');
-            document.querySelectorAll('.emoji').forEach(emoji => emoji.remove());
-        });
-
-        socket.on('gameInProgress', () => {
-            document.getElementById('result').innerText = 'Game in Progress. Please wait for the next round.';
-        });
-
-        const emojis = [];
-        const footerHeight = 60; // Set footer height
+        document.getElementById('footer-rock').addEventListener('click', () => createEmoji('🪨'));
+        document.getElementById('footer-paper').addEventListener('click', () => createEmoji('🧻'));
+        document.getElementById('footer-scissors').addEventListener('click', () => createEmoji('✂️'));
 
         function createEmoji(type) {
+            if (gameInProgress) return;
+
             const emoji = document.createElement('div');
             emoji.className = 'emoji';
             emoji.innerText = type;
             emoji.style.left = Math.random() * (window.innerWidth - 30) + 'px';
-            emoji.style.top = Math.random() * (window.innerHeight - footerHeight - 30) + 'px'; // Adjust for footer
-            emoji.dx = (Math.random() - 0.5) * 4; // Increase speed
-            emoji.dy = (Math.random() - 0.5) * 4; // Increase speed
+            emoji.style.top = Math.random() * (window.innerHeight - 60 - 30) + 'px';
+            emoji.dx = (Math.random() - 0.5) * 4;
+            emoji.dy = (Math.random() - 0.5) * 4;
             emoji.type = type;
             document.body.appendChild(emoji);
-            emojis.push(emoji);
+            emojiElements.push(emoji);
         }
 
         function moveEmojis() {
-            emojis.forEach(emoji => {
+            emojiElements.forEach(emoji => {
                 let x = parseFloat(emoji.style.left);
                 let y = parseFloat(emoji.style.top);
                 x += emoji.dx;
                 y += emoji.dy;
 
                 if (x <= 0 || x >= window.innerWidth - 30) emoji.dx *= -1;
-                if (y <= 0 || y >= window.innerHeight - footerHeight - 30) emoji.dy *= -1; // Adjust for footer
+                if (y <= 0 || y >= window.innerHeight - 60 - 30) emoji.dy *= -1;
 
                 emoji.style.left = x + 'px';
                 emoji.style.top = y + 'px';
@@ -162,10 +142,10 @@
         }
 
         function detectCollisions() {
-            for (let i = 0; i < emojis.length; i++) {
-                for (let j = i + 1; j < emojis.length; j++) {
-                    const emoji1 = emojis[i];
-                    const emoji2 = emojis[j];
+            for (let i = 0; i < emojiElements.length; i++) {
+                for (let j = i + 1; j < emojiElements.length; j++) {
+                    const emoji1 = emojiElements[i];
+                    const emoji2 = emojiElements[j];
 
                     const rect1 = emoji1.getBoundingClientRect();
                     const rect2 = emoji2.getBoundingClientRect();
@@ -209,7 +189,7 @@
             detectCollisions();
 
             const counts = { '🪨': 0, '🧻': 0, '✂️': 0 };
-            emojis.forEach(emoji => counts[emoji.type]++);
+            emojiElements.forEach(emoji => counts[emoji.type]++);
 
             if (counts['🪨'] > 0 && counts['✂️'] > 0 && counts['🧻'] === 0) {
                 endGame('🪨');
@@ -222,10 +202,20 @@
 
         function endGame(winner) {
             clearInterval(gameInterval);
-            gameStarted = false;
-            const resultText = winner === selectedEmoji ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
+            gameInterval = null;
+            const resultText = winner === selectedWinner ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
             document.getElementById('result').innerText = resultText;
+
+            setTimeout(() => {
+                selectedWinner = null;
+                document.getElementById('footer-rock').classList.remove('selected');
+                document.getElementById('footer-paper').classList.remove('selected');
+                document.getElementById('footer-scissors').classList.remove('selected');
+            }, 5000); // Reset after 5 seconds
         }
+
+        updateTimer();
+        countdownInterval = setInterval(updateTimer, 1000);
     </script>
 </body>
 </html>
