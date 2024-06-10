@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock Paper Scissors Simulation</title>
+    <title>Multiplayer Rock Paper Scissors</title>
     <style>
         body {
             margin: 0;
@@ -56,18 +57,56 @@
     </style>
 </head>
 <body>
-    <div id="result">Select your winner and start spamming emojis:</div>
+    <div id="result">Select your emoji to start the game:</div>
     <div class="footer">
-        <div id="footer-rock" class="choice" onclick="selectChoice('🪨')">🪨</div>
-        <div id="footer-paper" class="choice" onclick="selectChoice('🧻')">🧻</div>
-        <div id="footer-scissors" class="choice" onclick="selectChoice('✂️')">✂️</div>
+        <div id="footer-rock" class="choice" onclick="selectEmoji('🪨')">🪨</div>
+        <div id="footer-paper" class="choice" onclick="selectEmoji('🧻')">🧻</div>
+        <div id="footer-scissors" class="choice" onclick="selectEmoji('✂️')">✂️</div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        let gameInterval;
-        let selectedWinner;
-        const emojis = ['🪨', '🧻', '✂️'];
-        const emojiElements = [];
+        const socket = io();
+
+        let selectedEmoji = null;
+
+        function selectEmoji(emoji) {
+            if (!selectedEmoji) {
+                selectedEmoji = emoji;
+                highlightSelectedEmoji(emoji);
+                socket.emit('selectEmoji', emoji);
+            }
+        }
+
+        function highlightSelectedEmoji(emoji) {
+            document.getElementById('footer-rock').classList.remove('selected');
+            document.getElementById('footer-paper').classList.remove('selected');
+            document.getElementById('footer-scissors').classList.remove('selected');
+            if (emoji === '🪨') {
+                document.getElementById('footer-rock').classList.add('selected');
+            } else if (emoji === '🧻') {
+                document.getElementById('footer-paper').classList.add('selected');
+            } else if (emoji === '✂️') {
+                document.getElementById('footer-scissors').classList.add('selected');
+            }
+        }
+
+        socket.on('currentEmojis', (emojis) => {
+            emojis.forEach(emoji => {
+                createEmoji(emoji);
+            });
+        });
+
+        socket.on('emojiAdded', (emoji) => {
+            createEmoji(emoji);
+        });
+
+        socket.on('startGame', (emojis) => {
+            document.getElementById('result').innerText = 'Game Started!';
+            gameInterval = setInterval(updateGameState, 20);
+        });
+
+        const emojis = [];
         const footerHeight = 60; // Set footer height
 
         function createEmoji(type) {
@@ -80,41 +119,11 @@
             emoji.dy = (Math.random() - 0.5) * 4; // Increase speed
             emoji.type = type;
             document.body.appendChild(emoji);
-            emojiElements.push(emoji);
+            emojis.push(emoji);
         }
-
-        function selectChoice(choice) {
-            selectedWinner = choice;
-            highlightSelectedEmoji(choice);
-            startGame();
-        }
-
-        function startGame() {
-            document.getElementById('result').innerText = '';
-            if (!gameInterval) {
-                gameInterval = setInterval(updateGameState, 20);
-            }
-        }
-
-        function highlightSelectedEmoji(choice) {
-            document.getElementById('footer-rock').classList.remove('selected');
-            document.getElementById('footer-paper').classList.remove('selected');
-            document.getElementById('footer-scissors').classList.remove('selected');
-            if (choice === '🪨') {
-                document.getElementById('footer-rock').classList.add('selected');
-            } else if (choice === '🧻') {
-                document.getElementById('footer-paper').classList.add('selected');
-            } else if (choice === '✂️') {
-                document.getElementById('footer-scissors').classList.add('selected');
-            }
-        }
-
-        document.getElementById('footer-rock').addEventListener('click', () => createEmoji('🪨'));
-        document.getElementById('footer-paper').addEventListener('click', () => createEmoji('🧻'));
-        document.getElementById('footer-scissors').addEventListener('click', () => createEmoji('✂️'));
 
         function moveEmojis() {
-            emojiElements.forEach(emoji => {
+            emojis.forEach(emoji => {
                 let x = parseFloat(emoji.style.left);
                 let y = parseFloat(emoji.style.top);
                 x += emoji.dx;
@@ -129,10 +138,10 @@
         }
 
         function detectCollisions() {
-            for (let i = 0; i < emojiElements.length; i++) {
-                for (let j = i + 1; j < emojiElements.length; j++) {
-                    const emoji1 = emojiElements[i];
-                    const emoji2 = emojiElements[j];
+            for (let i = 0; i < emojis.length; i++) {
+                for (let j = i + 1; j < emojis.length; j++) {
+                    const emoji1 = emojis[i];
+                    const emoji2 = emojis[j];
 
                     const rect1 = emoji1.getBoundingClientRect();
                     const rect2 = emoji2.getBoundingClientRect();
@@ -176,23 +185,8 @@
             detectCollisions();
 
             const counts = { '🪨': 0, '🧻': 0, '✂️': 0 };
-            emojiElements.forEach(emoji => counts[emoji.type]++);
+            emojis.forEach(emoji => counts[emoji.type]++);
 
             if (counts['🪨'] > 0 && counts['✂️'] > 0 && counts['🧻'] === 0) {
                 endGame('🪨');
-            } else if (counts['🪨'] > 0 && counts['🧻'] > 0 && counts['✂️'] === 0) {
-                endGame('🧻');
-            } else if (counts['🧻'] > 0 && counts['✂️'] > 0 && counts['🪨'] === 0) {
-                endGame('✂️');
-            }
-        }
-
-        function endGame(winner) {
-            clearInterval(gameInterval);
-            gameInterval = null;
-            const resultText = winner === selectedWinner ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
-            document.getElementById('result').innerText = resultText;
-        }
-    </script>
-</body>
-</html>
+            } else if (counts['🪨'] >
