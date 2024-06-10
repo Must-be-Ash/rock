@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -189,4 +188,19 @@
 
             if (counts['🪨'] > 0 && counts['✂️'] > 0 && counts['🧻'] === 0) {
                 endGame('🪨');
-            } else if (counts['🪨'] >
+            } else if (counts['🪨'] > 0 && counts['🧻'] > 0 && counts['✂️'] === 0) {
+                endGame('🧻');
+            } else if (counts['🧻'] > 0 && counts['✂️'] > 0 && counts['🪨'] === 0) {
+                endGame('✂️');
+            }
+        }
+
+        function endGame(winner) {
+            clearInterval(gameInterval);
+            gameInterval = null;
+            const resultText = winner === selectedEmoji ? `You win! ${winner} Wins!` : `You lose! ${winner} Wins!`;
+            document.getElementById('result').innerText = resultText;
+        }
+    </script>
+</body>
+</html>
